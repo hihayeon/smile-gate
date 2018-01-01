@@ -1,0 +1,44 @@
+<%@page import="java.sql.Connection"%>
+<%@page import="org.apache.tomcat.dbcp.dbcp2.DriverManagerConnectionFactory"%>
+<%@page import="java.sql.DriverManager"%>
+<%@page import="java.sql.Driver"%>
+<%@page import="java.sql.ResultSet"%>
+<%@page import="java.sql.Statement"%>
+<%@ page language="java" contentType="text/html; charset=EUC-KR"
+    pageEncoding="EUC-KR"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=EUC-KR">
+<title>Insert title here</title>
+</head>
+<body>
+<%
+response.setStatus(HttpServletResponse.SC_OK);
+
+String uri = (String) request.getAttribute("javax.servlet.error.request_uri");
+String sub_url = uri.substring(1);
+
+String origin_url = null;
+String url = "jdbc:mysql://localhost:3306/shorturl";
+
+Class.forName("com.mysql.jdbc.Driver");
+Connection conn = DriverManager.getConnection(url,"root","oracle");  
+Statement stmt = conn.createStatement();
+
+String SQL ="select * from url where short_url='"+ sub_url +"'";
+
+ResultSet rs = stmt.executeQuery(SQL);
+
+ if(rs.next()){
+	out.println(rs.getString(1) + "<br>");
+	out.println(rs.getString(2) + "<br>");
+	origin_url = rs.getString(2);
+	out.println(rs.getString(3) + "<br><br>");
+	response.sendRedirect(origin_url);
+ }else{
+	 out.print("요청하신 페이지는 존재하지 않습니다.");
+ }
+%>
+</body>
+</html>

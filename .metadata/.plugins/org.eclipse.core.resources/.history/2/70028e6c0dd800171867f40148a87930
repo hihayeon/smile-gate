@@ -1,0 +1,73 @@
+<%@page import="java.sql.Connection"%>
+
+<%@page import="java.sql.DriverManager"%>
+<%@page import="java.sql.Driver"%>
+<%@page import="java.sql.ResultSet"%>
+<%@page import="java.sql.Statement"%>
+<%@ page language="java" contentType="text/html; charset=EUC-KR"
+    pageEncoding="EUC-KR"%>
+<jsp:useBean id="base62" class="shortUrl.Base62" scope="page" />
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=EUC-KR">
+<title>Insert title here</title>
+</head>
+<body>
+
+
+<%
+String origin_url = request.getParameter("origin_url");
+int ascii_sum = base62.sum_ascii(origin_url);
+String encoding_url = null;
+
+
+try{
+	String url = "jdbc:mysql://localhost:3306/shorturl";
+
+	Class.forName("com.mysql.jdbc.Driver");
+	Connection conn = DriverManager.getConnection(url,"root","gkduswkd1004!@#");  
+	Statement stmt = conn.createStatement();
+	
+	while(true){
+		String SQL = "select * from url where encoding="+ ascii_sum;
+		ResultSet rs = stmt.executeQuery(SQL);
+	
+		if(rs.next()){
+			
+			if(origin_url == rs.getString(2)){
+				break;
+			}else{
+				ascii_sum=ascii_sum*2;
+				if(ascii_sum > Math.pow(2,64)){//max 8char -> 8bytes -> 2^64 bits
+					ascii_sum = ascii_sum%10+1;
+				}
+			}
+		}
+		else{
+	      
+	      encoding_url = base62.encodeToLong(ascii_sum);
+		
+		  String query = "INSERT INTO url  VALUES('"+ascii_sum+"','"+origin_url+"','"+encoding_url+"')";
+		  stmt.executeUpdate(query);
+		  stmt.close();
+		  conn.close();
+		  break;
+		}
+	 }
+	 }
+	 catch(Exception e){
+	  out.println( e );
+	 }
+	
+	response.sendRedirect("/main.jsp?origin_url="+origin_url+"&encoding_url="+encoding_url);
+    /*
+	request.setAttribute("orgin_url", origin_url);
+    request.setAttribute("encoding_url", encoding_url );
+    RequestDispatcher dispatcher = request.getRequestDispatcher("/main.jsp");
+    dispatcher.forward(request,response);
+    */
+%>
+
+</body>
+</html>
